@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Example Bipartition Covariance Network</title>
+        
+        <!-- d3 library for data visualization and animation -->
+        <!-- script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script -->
+        <script type="text/javascript" src="d3.js"></script -->
+
+        <!-- jstat library for probability distributions -->
+        <!-- script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script -->
+        <script type="text/javascript" src="jstat.min.js"></script>
+        
+        <!-- phyleaux library for phylogenetic objects and functions -->
+        <script type="text/javascript" src="phyleaux.js"></script>
+        <!-- script type="text/javascript" src="https://jembrown.github.io/phyleaux.js"></script -->
+        
+        <!-- MathJax library for formatting equations -->
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async></script>
+        
+		<style type="text/css">
+        	
+        	@font-face { font-family: Glober; font-weight: semibold; src: url('Glober-SemiBold.otf'); }
+        	        	
+        	h1 {
+        		font-family: Glober;
+        		font-size: 24px;
+        	}
+        	        	         	
+        </style>
+    </head>
+    <body>
+    	<h1>Example Bipartition Covariance Network</h1>
+    	    	
+    	<p>
+    	In this simple example, imagine that we have a set of 5-taxon trees consisting of only two topologies 
+    	(shown below). These topologies are present at equal frequencies (50% each). 
+    	</p>
+    	
+    	<script>
+
+		// Defining the width and height for the svg that will hold the covariance network.
+		var w = 450;
+        var h = 300;
+
+		// Defining and drawing the two 5-taxon tree topologies
+		var treeOne = new Tree("((B,C),(A,D),O);");
+		var treeTwo = new Tree("(A,(B,(C,D)),O);");
+		
+		treeOne.drawCladogram(w/2,h/2,color="#FAC22B",lwd=6,scale=0.8,padding=10,tipLabels=true,fSize=18);
+		treeTwo.drawCladogram(w/2,h/2,color="#603E95",lwd=6,scale=0.8,padding=10,tipLabels=true,fSize=18);
+
+		</script>
+        
+        <br>
+        
+        <p>
+        These trees can be broken down into their component bipartitions. For instance, the unrooted gold
+        tree has two non-trivial bipartitions that can be written as:<br><br>
+        
+        BC | ADO<br>
+        AD | BCO<br><br>
+        
+        To understand this notation, imagine taking scissors and cutting each internal branch in the tree.
+        The taxa on each side of the vertical line would then be separated from each other. Neither of these 
+        bipartitions are present in the purple tree, whose bipartitions can be written as:<br><br>
+        
+        CD | ABO<br>
+        AO | BCD<br><br>
+        
+        If we record how often we find each pair of bipartitions together in the same tree, and compare it to
+        the frequency we would expect if we randomly chose pairs of bipartitions, we end up with the covariance
+        between each bipartition pair. Large, positive covariances indicate that bipartitions are found together
+        more often than expected by chance. Large, negative covariances indicate that bipartitions are found together
+        less often than expected by chance. Covariances of magnitude 0 indicate that bipartitions are found together 
+        just as often as expected.<br><br>
+        
+        As one example, we can calculate the covariance between BC | ADO and CD | ABO:
+        
+        $$ cov(BC|ADO, CD|ABO) = E[BC|ADO\ \&\ CD|ABO] - E[BC|ADO]\ E[CD|ABO] $$
+        
+        The first term on the right, \(E[BC|ADO\ \&\ CD|ABO]\), is the expectation for the frequency with which our
+        pair of bipartitions are found together. Since these two are <i>never</i> found together for this pair, this value is 0.
+        However, each of them is found in a topology that makes up half of our tree set. Therefore, each of their individual
+        frequencies is 0.5. Therefore, the product of their expectations is \(E[BC|ADO]\ E[CD|ABO] = (0.5)(0.5) = 0.25\).
+        Therefore, the covariance in this case is:
+        
+        $$ cov(BC|ADO, CD|ABO) = 0 - 0.25 = -0.25. $$
+        
+        By computing covariances in this way for each pair of bipartitions, we can construct a network. Each node in this network 
+        represents a different bipartition and the edges connecting bipartitions is weighted by their covariance.<br><br>
+        
+        The bipartition covariance network for this simple example is shown below. This plot uses a force-directed layout to keep the nodes arranged
+        in a reasonable way, but <b>feel free to move the nodes around</b>. Mouse over the nodes to see which bipartition they represent
+        and mouse over the edges to see their covariances.<br><br>
+                
+        </p>        
+        
+        
+        
+        <script>
+        
+        // Dataset based on the simple example of a tree set with two topologies at equal
+        // frequencies (50% each). 
+        
+        var dataset = {
+        
+        	// 5-taxon bipartition descriptions
+        
+        	nodes:[
+        		{ name: "OA|BCD" },
+        		{ name: "OB|ACD" },
+        		{ name: "OC|ABD" },
+        		{ name: "OD|ABC" },
+        		{ name: "AB|OCD" },
+        		{ name: "AC|OBD" },
+        		{ name: "AD|OBC" },
+        		{ name: "BC|OAD" },
+        		{ name: "BD|OAC" },
+        		{ name: "CD|OAB" },
+        	],
+        	
+        	// Edges between all bipartitions, with weights as covariances from the 
+        	// example tree set.
+        	
+        	edges: [	
+        		{ source: 0, target: 1, weight: 0.0 },		// 1
+        		{ source: 0, target: 2, weight: 0.0 },		// 2
+        		{ source: 0, target: 3, weight: 0.0 },		// 3
+        		{ source: 0, target: 4, weight: 0.0 },		// 4
+        		{ source: 0, target: 5, weight: 0.0 },		// 5
+        		{ source: 0, target: 6, weight: -0.25 },	// 6
+        		{ source: 0, target: 7, weight: -0.25 },	// 7
+        		{ source: 0, target: 8, weight: 0.0 },		// 8
+        		{ source: 0, target: 9, weight: 0.25 },		// 9
+        		{ source: 1, target: 2, weight: 0.0 },		// 10
+        		{ source: 1, target: 3, weight: 0.0 },		// 11
+        		{ source: 1, target: 4, weight: 0.0 },		// 12
+        		{ source: 1, target: 5, weight: 0.0 },		// 13
+        		{ source: 1, target: 6, weight: 0.0 },		// 14
+        		{ source: 1, target: 7, weight: 0.0 },		// 15
+        		{ source: 1, target: 8, weight: 0.0 },		// 16
+        		{ source: 1, target: 9, weight: 0.0 },		// 17
+        		{ source: 2, target: 3, weight: 0.0 },		// 18
+        		{ source: 2, target: 4, weight: 0.0 },		// 19
+        		{ source: 2, target: 5, weight: 0.0 },		// 20
+        		{ source: 2, target: 6, weight: 0.0 },		// 21
+        		{ source: 2, target: 7, weight: 0.0 },		// 22
+        		{ source: 2, target: 8, weight: 0.0 },		// 23
+        		{ source: 2, target: 9, weight: 0.0 },		// 24
+        		{ source: 3, target: 4, weight: 0.0 },		// 25
+        		{ source: 3, target: 5, weight: 0.0 },		// 26
+        		{ source: 3, target: 6, weight: 0.0 },		// 27
+        		{ source: 3, target: 7, weight: 0.0 },		// 28
+        		{ source: 3, target: 8, weight: 0.0 },		// 29
+        		{ source: 3, target: 9, weight: 0.0 },		// 30
+        		{ source: 4, target: 5, weight: 0.0 },		// 31
+        		{ source: 4, target: 6, weight: 0.0 },		// 32
+        		{ source: 4, target: 7, weight: 0.0 },		// 33
+        		{ source: 4, target: 8, weight: 0.0 },		// 34
+        		{ source: 4, target: 9, weight: 0.0 },		// 35
+        		{ source: 5, target: 6, weight: 0.0 },		// 36
+        		{ source: 5, target: 7, weight: 0.0 },		// 37
+        		{ source: 5, target: 8, weight: 0.0 },		// 38
+        		{ source: 5, target: 9, weight: 0.0 },		// 39
+        		{ source: 6, target: 7, weight: 0.25 },		// 40
+        		{ source: 6, target: 8, weight: 0.0 },		// 41
+        		{ source: 6, target: 9, weight: -0.25 },	// 42
+        		{ source: 7, target: 8, weight: 0.0 },		// 43
+        		{ source: 7, target: 9, weight: -0.25 },	// 44
+        		{ source: 8, target: 9, weight: 0.0 },		// 45
+        	]
+        }
+        
+        // Creating the svg to hold the covariance network
+        var svg = d3.select("body")
+          			.append("svg")
+          			.attr("width",w)
+          			.attr("height",h);
+        
+        // Setting up the force simulation to arrange nodes in the covariance network
+        var force = d3.forceSimulation(dataset.nodes)
+              .force("charge", d3.forceManyBody().strength(-100))
+              .force("link", d3.forceLink(dataset.edges).strength(function(d){
+              		return (Math.abs(d.weight)*0.1)+0.01
+              }))
+              .force("center", d3.forceCenter().x(w/2).y(h/2));
+        
+        // Define plotting parameters for covariance edges
+        var edges = svg.selectAll("line")
+               			.data(dataset.edges)
+               			.enter()
+               			.append("line")
+               			.style("stroke", function(d){
+               				if (d.weight > 0){			// + covariances
+               					return "#009DA1";
+               				} else if (d.weight < 0){	// - covariances
+               					return "#D7255D";
+               				}							// Ignores edges with 0 weights
+               			})
+               			.style("stroke-width", function(d){	// Edge weights proportional to magnitude of covariance
+               				return Math.abs(d.weight)*25
+               			});
+        
+        // Define plotting parameters for bipartition nodes
+		var nodes = svg.selectAll("circle")
+					   .data(dataset.nodes)
+					   .enter()
+					   .append("circle")
+					   .attr("r", 15)
+					   .style("fill",function(d,i){
+					   		if (i === 0 || i === 9){		// Coloring bipartitions from "purple" tree
+					   			return "#603E95";
+					   		} else if (i === 6 || i === 7){
+					   			return "#FAC22B";			// Coloring bipartitions from "gold" tree
+					   		} else {
+					   			return "grey";				// Coloring other bipartitions
+					   		}
+					   })
+					   .call(d3.drag()  					//Define what to do on drag events
+								.on("start", dragStarted)
+								.on("drag", dragging)
+								.on("end", dragEnded));        
+
+		// Defining behavior of node dragging
+		function dragStarted(d) {
+			if (!d3.event.active) force.alphaTarget(0.3).restart();
+			d.fx = d.x;
+			d.fy = d.y;
+		}
+
+		function dragging(d) {
+			d.fx = d3.event.x;
+			d.fy = d3.event.y;
+		}
+
+		function dragEnded(d) {
+			if (!d3.event.active) force.alphaTarget(0);
+			d.fx = null;
+			d.fy = null;
+		}
+		
+		// Tooltip for nodes to show bipartition description
+		nodes.append("title")
+    		 .text(function(d) {
+				  return d.name;
+			  });
+
+		// Tooltip for edges to show covariance
+		edges.append("title")
+			 .text(function(d) {
+			 	  return d.weight;
+			 });
+
+		// Defining behavior of nodes and edges during physical simulation
+		force.on("tick", function() {
+			edges.attr("x1", function(d) { return d.source.x; })
+				 .attr("y1", function(d) { return d.source.y; })
+				 .attr("x2", function(d) { return d.target.x; })
+				 .attr("y2", function(d) { return d.target.y; });
+
+			nodes.attr("cx", function(d) { return d.x; })
+				 .attr("cy", function(d) { return d.y; });
+		});
+
+		</script>
+		
+		<p>
+		Grey nodes represent bipartitions not found in either of the 
+        topologies in this tree set, so they have a covariance of 0 with all other nodes.
+        Purple nodes show bipartitions from the purple input tree and gold nodes show 
+        bipartitions from the gold input tree. Edges representing positive covariances are shown
+        in teal and those representing negative covariances are shown in red.
+		</p>
+		
+    </body>
+</html>
+
