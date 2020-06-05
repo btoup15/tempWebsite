@@ -97,6 +97,7 @@
 			var posEdgeColor = "blue";
 			var negEdgeColor = "red";
 
+            var nodeStyle = "circles";
 
 			/* Functions called by options from the Node Color dropdown */
 		
@@ -194,11 +195,22 @@
 				refreshNetwork();
 			}
 		
+            var changeNodesToCircles = function(){
+                nodeStyle = "circles";
+            	refreshNetwork();
+            }
+
+            var changeNodesToNumbers = function(){
+            	nodeStyle = "numbers";
+            	refreshNetwork();
+            }
+
 			// Function to quickly replot network after changing a display parameter
 
 			var refreshNetwork = function() {
 				d3.select("svg").selectAll("line").remove();
 				d3.select("svg").selectAll("circle").remove();
+				d3.select("svg").selectAll("text").remove();
 				plotNetwork( svg = d3.select("svg"),
 							 w = 600, 
 							 h = 600, 
@@ -389,20 +401,34 @@
 								.style("stroke-width", function(d){	// Edge weights proportional to magnitude of covariance
 									return Math.abs(d.weight) * edgeScaling
 								});
-		
-				// Define plotting parameters for bipartition nodes
-				var nodes = svg.selectAll("circle")
-							   .data(dataset.nodes)
-							   .enter()
-							   .append("circle")
-							   .attr("r", r)
-							   .style("fill",function(d,i){
-									return nodeColor;
-							   })
-							   .call(d3.drag()  					//Define what to do on drag events
-										.on("start", dragStarted)
-										.on("drag", dragging)
-										.on("end", dragEnded));        
+		        
+		        if (nodeStyle == "circles"){
+				    // Define plotting parameters for bipartition nodes
+				    var nodes = svg.selectAll("circle")
+							       .data(dataset.nodes)
+							       .enter()
+							       .append("circle")
+							       .attr("r", r)
+							       .style("fill",function(d,i){
+									     return nodeColor;
+							        })
+							        .call(d3.drag()  					//Define what to do on drag events
+										    .on("start", dragStarted)
+										    .on("drag", dragging)
+										    .on("end", dragEnded));        
+                } else if (nodeStyle == "numbers"){
+				    var nodes = svg.selectAll("text")
+							       .data(dataset.nodes)
+							       .enter()
+							       .append("text")
+							       .text(function(d,i){
+									     return d.name;
+							        })
+							        .call(d3.drag()  					//Define what to do on drag events
+										    .on("start", dragStarted)
+										    .on("drag", dragging)
+										    .on("end", dragEnded));        
+                }
 
 				// Next 3 functions define behavior of node dragging
 				function dragStarted(d) {
@@ -441,9 +467,14 @@
 						 .attr("y1", function(d) { return d.source.y; })
 						 .attr("x2", function(d) { return d.target.x; })
 						 .attr("y2", function(d) { return d.target.y; });
-
-					nodes.attr("cx", function(d) { return d.x; })
-						 .attr("cy", function(d) { return d.y; });
+                    
+                    if (nodeStyle == "circles"){
+					    nodes.attr("cx", function(d) { return d.x; })
+						     .attr("cy", function(d) { return d.y; });
+					} else if (nodeStyle == "numbers"){
+					    nodes.attr("x", function(d) { return d.x; })
+						     .attr("y", function(d) { return d.y; });
+					}
 				});
 			
 				// Adds a scale bar with a default value of 0.1 in the bottom-right corner
@@ -508,7 +539,15 @@
 			<a onclick="changeNegEdgeColorBlack()">Black</a>
 		  </div>
 		</div>
-				
+			
+		<div class="dropdown">
+          <button onclick="toggleNodeCirclesNumbers()" class="dropbtn">Node Style</button>
+          <div id="nodeCircleNum" class="dropdown-content">
+            <a onclick="changeNodesToCircles()">Circles</a>
+            <a onclick="changeNodesToNumbers()">Numbers</a>
+          </div>
+		</div>
+
     	<br><br>
     	
     	<!-- Input slider for node radius -->
@@ -568,6 +607,10 @@
 			function toggleNegEdgeColorDropdown() {
 				document.getElementById("negEdgeColor").classList.toggle("show");
 			}
+
+            function toggleNodeCirclesNumbers() {
+            	document.getElementById("nodeCircleNum").classList.toggle("show");
+            }
 
 			// Close the dropdown menu if the user clicks outside of it
 			window.onclick = function(event) {
