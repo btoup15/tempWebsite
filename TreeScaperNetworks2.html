@@ -97,6 +97,7 @@
 			var posEdgeColor = "blue";
 			var negEdgeColor = "red";
 
+            var nodeStyle = "circles";
 
 			/* Functions called by options from the Node Color dropdown */
 		
@@ -194,6 +195,16 @@
 				refreshNetwork();
 			}
 		
+            var changeNodesToCircles = function(){
+                nodeStyle = "circles";
+            	refreshNetwork();
+            }
+
+            var changeNodesToNumbers = function(){
+            	nodeStyle = "numbers";
+            	refreshNetwork();
+            }
+
 			// Function to quickly replot network after changing a display parameter
 
 			var refreshNetwork = function() {
@@ -389,20 +400,34 @@
 								.style("stroke-width", function(d){	// Edge weights proportional to magnitude of covariance
 									return Math.abs(d.weight) * edgeScaling
 								});
-		
-				// Define plotting parameters for bipartition nodes
-				var nodes = svg.selectAll("circle")
-							   .data(dataset.nodes)
-							   .enter()
-							   .append("circle")
-							   .attr("r", r)
-							   .style("fill",function(d,i){
-									return nodeColor;
-							   })
-							   .call(d3.drag()  					//Define what to do on drag events
-										.on("start", dragStarted)
-										.on("drag", dragging)
-										.on("end", dragEnded));        
+		        
+		        if (nodeStyle == "circles"){
+				    // Define plotting parameters for bipartition nodes
+				    var nodes = svg.selectAll("circle")
+							       .data(dataset.nodes)
+							       .enter()
+							       .append("circle")
+							       .attr("r", r)
+							       .style("fill",function(d,i){
+									     return nodeColor;
+							        })
+							        .call(d3.drag()  					//Define what to do on drag events
+										    .on("start", dragStarted)
+										    .on("drag", dragging)
+										    .on("end", dragEnded));        
+                } else if (nodeStyle == "numbers"){
+				    var nodes = svg.selectAll("circle")
+							       .data(dataset.nodes)
+							       .enter()
+							       .append("text")
+							       .text(function(d,i){
+									     return d.name;
+							        })
+							        .call(d3.drag()  					//Define what to do on drag events
+										    .on("start", dragStarted)
+										    .on("drag", dragging)
+										    .on("end", dragEnded));        
+                }
 
 				// Next 3 functions define behavior of node dragging
 				function dragStarted(d) {
