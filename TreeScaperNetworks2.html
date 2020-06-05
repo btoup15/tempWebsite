@@ -416,7 +416,7 @@
 										    .on("drag", dragging)
 										    .on("end", dragEnded));        
                 } else if (nodeStyle == "numbers"){
-				    var nodes = svg.selectAll("circle")
+				    var nodes = svg.selectAll("text")
 							       .data(dataset.nodes)
 							       .enter()
 							       .append("text")
